@@ -1,11 +1,13 @@
 package com.sparta.outsourcing.domain.user.service;
 
-import com.sparta.outsourcing.domain.user.config.PasswordEncoder;
+import com.sparta.outsourcing.global.config.JwtUtil;
+import com.sparta.outsourcing.global.config.PasswordEncoder;
 import com.sparta.outsourcing.domain.user.dto.UserRequestDto;
 import com.sparta.outsourcing.domain.user.dto.UserResponseDto;
 import com.sparta.outsourcing.domain.user.entity.User;
 import com.sparta.outsourcing.domain.user.entity.UserRoleEnum;
 import com.sparta.outsourcing.domain.user.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,12 +20,12 @@ import org.springframework.validation.annotation.Validated;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final JwtUtil jwtUtil;
     @Value("${spring.owner.token}")
     private String OWNER_TOKEN;
 
 
-    public UserResponseDto signup(@Valid UserRequestDto userRequest) {
+    public UserResponseDto signup(@Valid UserRequestDto userRequest, HttpServletResponse res) {
         String email = userRequest.getEmail();
         //비밀번호 암호와
         String password = passwordEncoder.encode(userRequest.getPassword());
@@ -46,6 +48,9 @@ public class UserService {
         User user = new User(userRequest,password,role);
         //DB저장
         User saveUser = userRepository.save(user);
+        //token생성 및 쿠키
+        String token = jwtUtil.createToken(saveUser.getId());
+        jwtUtil.addJwtToCookie(token,res);
         return new UserResponseDto(saveUser);
     }
 }

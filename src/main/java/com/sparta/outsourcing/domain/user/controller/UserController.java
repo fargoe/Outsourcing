@@ -3,6 +3,7 @@ package com.sparta.outsourcing.domain.user.controller;
 import com.sparta.outsourcing.domain.user.dto.UserRequestDto;
 import com.sparta.outsourcing.domain.user.dto.UserResponseDto;
 import com.sparta.outsourcing.domain.user.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +18,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserResponseDto> signup(@RequestBody UserRequestDto userRequest){
-        return ResponseEntity.ok(userService.signup(userRequest));
+    public ResponseEntity<UserResponseDto> signup(@RequestBody UserRequestDto userRequest, HttpServletResponse res) {
+        return ResponseEntity.ok(userService.signup(userRequest, res));
     }
 }

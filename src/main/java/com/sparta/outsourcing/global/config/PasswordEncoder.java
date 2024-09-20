@@ -1,4 +1,4 @@
-package com.sparta.outsourcing.domain.user.config;
+package com.sparta.outsourcing.global.config;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Component;
