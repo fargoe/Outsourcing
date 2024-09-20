@@ -25,6 +25,11 @@ public class UserController {
         return ResponseEntity.ok(userService.login(userRequest, res));
     }
 
+    @DeleteMapping("/{user_id}")
+    public ResponseEntity<String> deleteUser(@PathVariable Long user_id, @Auth AuthUser authUser, @RequestBody UserRequestDto userRequest) {
+        return ResponseEntity.ok(userService.deleteUser(user_id, authUser, userRequest));
+    }
+
     @PatchMapping("/{user_id}/changepassword")
     public ResponseEntity<String> changePassword(@PathVariable Long user_id, @RequestBody ChangePasswordRequestDto changePasswordRequest, @Auth AuthUser authUser) {
         return ResponseEntity.ok(userService.changePassword(user_id, changePasswordRequest, authUser));
