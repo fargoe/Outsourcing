@@ -1,9 +1,8 @@
 package com.sparta.outsourcing.domain.user.service;
 
+import com.sparta.outsourcing.domain.user.dto.*;
 import com.sparta.outsourcing.global.config.JwtUtil;
 import com.sparta.outsourcing.global.config.PasswordEncoder;
-import com.sparta.outsourcing.domain.user.dto.UserRequestDto;
-import com.sparta.outsourcing.domain.user.dto.UserResponseDto;
 import com.sparta.outsourcing.domain.user.entity.User;
 import com.sparta.outsourcing.domain.user.entity.UserRoleEnum;
 import com.sparta.outsourcing.domain.user.repository.UserRepository;
@@ -52,5 +51,31 @@ public class UserService {
         String token = jwtUtil.createToken(saveUser.getId());
         jwtUtil.addJwtToCookie(token,res);
         return new UserResponseDto(saveUser);
+    }
+
+    public LoginResponseDto login(UserRequestDto userRequest, HttpServletResponse res) {
+        String email = userRequest.getEmail();
+        String password = userRequest.getPassword();
+        User user = (User) userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을수없습니다"));
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("잘못된 비밀 번호를 입력하셨습니다");
+        }
+        String token = jwtUtil.createToken(user.getId());
+        jwtUtil.addJwtToCookie(token, res);
+        return new LoginResponseDto(token);
+    }
+
+    public String changePassword(Long userId, ChangePasswordRequestDto passwordRequest, AuthUser authUser) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+        if(!userId.equals(authUser.getId())) {
+            throw new IllegalArgumentException("유저 정보가 일치 하지 않습니다.");
+        }
+        if(!passwordEncoder.matches(passwordRequest.getOldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("현제 비밀번호가 일치하지않습니다.");
+        }
+        String password = passwordEncoder.encode(passwordRequest.getNewPassword());
+        user.changePassword(password);
+        userRepository.save(user);
+        return "Password Changed";
     }
 }

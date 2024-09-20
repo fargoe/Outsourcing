@@ -8,6 +8,7 @@ public class AuthUser {
     private final Long id;
     private final UserRoleEnum role;
     private final String email;
+
     public AuthUser(Long id,UserRoleEnum role,String email){
         this. id = id;
         this.role = role;
