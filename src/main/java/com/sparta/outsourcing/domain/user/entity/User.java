@@ -4,9 +4,11 @@ import com.sparta.outsourcing.domain.user.dto.UserRequestDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter
+@SoftDelete
 @Table(name = "users")
 @NoArgsConstructor
 public class User extends Timestamped{
