@@ -24,3 +24,6 @@ spring:
   jwt:
     secret:
       key: ${JWT_SECRET_KEY}
+
+  owner:
+    token: ${OWNER_TOKEN}

@@ -10,16 +10,25 @@ import lombok.NoArgsConstructor;
 @Table(name = "users")
 @NoArgsConstructor
 public class User extends Timestamped{
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name ="user_id")
     private Long id;
+
     private String email;
+
     @Column(name = "password", nullable = false)
     private String password;
-    public User(UserRequestDto userRequest){
+
+    @Column(name = "role", nullable = false)
+    @Enumerated(value = EnumType.STRING)
+    private UserRoleEnum role;
+
+    public User(UserRequestDto userRequest,String password,UserRoleEnum role) {
         this.email = userRequest.getEmail();
-        this.password = userRequest.getPassword();
+        this.password = password;
+        this.role = role;
     }
 }
 
