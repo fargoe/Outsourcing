@@ -29,7 +29,7 @@ public class ShopController {
     }
 
     // 가게 수정
-    @PutMapping("/{shopId}")
+    @PutMapping("/{shop_Id}")
     public ResponseEntity<ShopResponseDto> updateShop(
             @PathVariable Long shopId,
             @RequestBody ShopRequestDto shopRequest,
@@ -46,9 +46,16 @@ public class ShopController {
     }
 
     // 가게 단건 조회
-    @GetMapping("/{shopId}")
+    @GetMapping("/{shop_Id}")
     public ResponseEntity<ShopResponseDto> getShopById(@PathVariable Long shopId) {
         ShopResponseDto shop = shopService.getShopById(shopId);
         return ResponseEntity.ok(shop);
+    }
+
+    // 가게 폐업
+    @DeleteMapping("/{shop_Id}/close")
+    public ResponseEntity<Void> closeShop(@PathVariable Long shopId, @Auth User authUser) {
+        shopService.closeShop(shopId, authUser);
+        return ResponseEntity.noContent().build(); // 204 No Content 응답
     }
 }

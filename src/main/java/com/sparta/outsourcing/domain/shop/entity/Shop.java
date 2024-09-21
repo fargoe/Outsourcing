@@ -50,4 +50,9 @@ public class Shop extends Timestamped {
         this.closetime = closetime;
         this.minOrderAmount = minOrderAmount;
     }
+
+    // 폐업 상태로 변경하는 메서드
+    public void close() {
+        this.closed = true;
+    }
 }

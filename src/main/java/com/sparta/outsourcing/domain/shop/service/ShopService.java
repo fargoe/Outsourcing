@@ -107,4 +107,19 @@ public class ShopService {
                 shop.getMinOrderAmount()
         );
     }
+
+    public void closeShop(Long shopId, User authUser) {
+        // 해당 가게 찾기
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 가게를 찾을 수 없습니다."));
+
+        // 사용자가 가게 소유자인지 확인
+        if (!shop.getOwner().equals(authUser)) {
+            throw new SecurityException("가게 폐업 권한이 없습니다.");
+        }
+
+        // 가게 상태를 폐업으로 변경
+        shop.close(); // 폐업 메서드 호출
+        shopRepository.save(shop); // 변경 사항 저장
+    }
 }
