@@ -20,7 +20,7 @@ public class Shop extends Timestamped {
     @Column(name = "shop_id")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
@@ -30,6 +30,7 @@ public class Shop extends Timestamped {
 
     @Column(name = "minOrderAmount", nullable = false)
     private BigDecimal minOrderAmount;
+
     private boolean closed;
 
     @Builder
@@ -40,5 +41,13 @@ public class Shop extends Timestamped {
         this.closetime = closetime;
         this.minOrderAmount = minOrderAmount;
         this.closed = closed;
+    }
+
+    // 가게 정보를 업데이트하는 메서드
+    public void updateShopDetails(String name, LocalTime opentime, LocalTime closetime, BigDecimal minOrderAmount) {
+        this.name = name;
+        this.opentime = opentime;
+        this.closetime = closetime;
+        this.minOrderAmount = minOrderAmount;
     }
 }
