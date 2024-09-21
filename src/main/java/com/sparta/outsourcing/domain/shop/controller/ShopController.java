@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/shops")
@@ -34,5 +36,19 @@ public class ShopController {
             @Auth User authUser) {
         ShopResponseDto updatedShop = shopService.updateShop(shopId, shopRequest, authUser);
         return ResponseEntity.ok(updatedShop);
+    }
+
+    // 가게 다건 조회
+    @GetMapping("/search")
+    public ResponseEntity<List<ShopResponseDto>> getShopsByName(@RequestParam String name) {
+        List<ShopResponseDto> shops = shopService.getShopsByName(name);
+        return ResponseEntity.ok(shops);
+    }
+
+    // 가게 단건 조회
+    @GetMapping("/{shopId}")
+    public ResponseEntity<ShopResponseDto> getShopById(@PathVariable Long shopId) {
+        ShopResponseDto shop = shopService.getShopById(shopId);
+        return ResponseEntity.ok(shop);
     }
 }

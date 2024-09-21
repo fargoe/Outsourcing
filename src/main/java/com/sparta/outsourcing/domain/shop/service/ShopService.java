@@ -12,6 +12,9 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 public class ShopService {
@@ -74,6 +77,34 @@ public class ShopService {
                 updatedShop.getOpentime(),
                 updatedShop.getClosetime(),
                 updatedShop.getMinOrderAmount()
+        );
+    }
+
+    // 가게 다건 조회
+    public List<ShopResponseDto> getShopsByName(String name) {
+        List<Shop> shops = shopRepository.findByNameContaining(name);
+        return shops.stream()
+                .map(shop -> new ShopResponseDto(
+                        shop.getId(),
+                        shop.getName(),
+                        shop.getOpentime(),
+                        shop.getClosetime(),
+                        shop.getMinOrderAmount()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    // 가게 단건 조회
+    public ShopResponseDto getShopById(Long shopId) {
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다."));
+
+        return new ShopResponseDto(
+                shop.getId(),
+                shop.getName(),
+                shop.getOpentime(),
+                shop.getClosetime(),
+                shop.getMinOrderAmount()
         );
     }
 }
