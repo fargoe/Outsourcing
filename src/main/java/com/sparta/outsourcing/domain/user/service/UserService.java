@@ -32,8 +32,11 @@ public class UserService {
         if (userRepository.findByEmail(email).isPresent()){
             throw new IllegalArgumentException("이미 가입된 이메일 입니다.");
         }
-
         UserRoleEnum role = UserRoleEnum.USER;
+
+        if(userRepository.findDeletedEmail(email).isPresent()){
+            throw new IllegalArgumentException("이미 탈퇴한 이메일 입니다");
+        }
 
         //관리자 권한 검증
         if (userRequest.isOwner()) {

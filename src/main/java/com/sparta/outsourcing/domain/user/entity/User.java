@@ -4,9 +4,11 @@ import com.sparta.outsourcing.domain.user.dto.UserRequestDto;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.SoftDelete;
 
 @Entity
 @Getter
+@SoftDelete(columnName="deleted")
 @Table(name = "users")
 @NoArgsConstructor
 public class User extends Timestamped{
@@ -15,7 +17,6 @@ public class User extends Timestamped{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name ="user_id")
     private Long id;
-
     private String email;
 
     @Column(name = "password", nullable = false)
@@ -24,6 +25,7 @@ public class User extends Timestamped{
     @Column(name = "role", nullable = false)
     @Enumerated(value = EnumType.STRING)
     private UserRoleEnum role;
+
 
     public User(UserRequestDto userRequest,String password,UserRoleEnum role) {
         this.email = userRequest.getEmail();
