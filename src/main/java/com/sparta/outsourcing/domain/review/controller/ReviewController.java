@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -25,4 +27,11 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.createReview(orderId, reviewRequestDto, userId));
     }
 
+    // 리뷰 조회
+    @GetMapping("/shops/{shopId}/reviews")
+    public ResponseEntity<List<ReviewResponseDto>> getShopReviews(@PathVariable Long shopId,
+                                                                  @RequestParam(value = "minRating", required = false) Integer minRating,
+                                                                  @RequestParam(value = "maxRating", required = false) Integer maxRating) {
+        return ResponseEntity.ok(reviewService.getShopReviews(shopId, minRating, maxRating));
+    }
 }
