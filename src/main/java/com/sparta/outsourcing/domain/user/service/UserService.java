@@ -95,4 +95,9 @@ public class UserService {
             userRepository.delete(user);
             return "회원탈퇴 완료";
     }
+
+    // 유저 권한(사장님)을 확인하는 메서드
+    public boolean hasRole(User user, UserRoleEnum role) {
+        return user.getRole() == role; // UserRoleEnum 비교
+    }
 }
