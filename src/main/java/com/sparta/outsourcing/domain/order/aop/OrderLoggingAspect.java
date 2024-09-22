@@ -5,9 +5,9 @@ import com.sparta.outsourcing.domain.order.entity.Order;
 import com.sparta.outsourcing.domain.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -24,13 +24,12 @@ public class OrderLoggingAspect {
     @Around("execution(* com.sparta.outsourcing.domain.order.service.OrderService.createOrder(..))")
     public Object logOrderCreation(ProceedingJoinPoint joinPoint) throws Throwable {
         Object[] args = joinPoint.getArgs();
-        Long shopId = (Long) args[1];  // 가게 ID
-        Long userId = (Long) args[2];  // 주문을 생성한 유저 ID
+        Long shopId = (Long) args[1];
+        Long userId = (Long) args[2];
         LocalDateTime now = LocalDateTime.now();
 
         try {
             Object result = joinPoint.proceed();
-            // 주문 생성 성공 시 로그에 주문 유저 ID 추가
             log.info("INFO: [{}] 주문 생성 성공 - 가게 ID: {}, 주문 ID: {}, 주문 유저 ID: {}", now, shopId, ((OrderResponseDto) result).getOrderId(), userId);
             return result;
         } catch (Exception ex) {
@@ -44,13 +43,13 @@ public class OrderLoggingAspect {
     public Object logOrderStatusUpdate(ProceedingJoinPoint joinPoint) throws Throwable {
         Object[] args = joinPoint.getArgs();
 
-        Long orderId = (Long) args[0];  // 주문 ID
-        Long userId = (Long) args[2];   // 주문 상태 변경을 요청한 유저 ID
+        Long orderId = (Long) args[0];
+        Long userId = (Long) args[2];
         Long shopId = getShopIdFromOrder(orderId);  // 주문 ID로부터 가게 ID 추출
         LocalDateTime now = LocalDateTime.now();
 
         try {
-            Object result = joinPoint.proceed();  // 실제 메서드 실행
+            Object result = joinPoint.proceed();
             log.info("INFO: [{}] 주문 상태 변경 성공 - 가게 ID: {}, 주문 ID: {}, 주문 유저 ID: {}", now, shopId, orderId, userId);
             return result;
         } catch (Exception ex) {
