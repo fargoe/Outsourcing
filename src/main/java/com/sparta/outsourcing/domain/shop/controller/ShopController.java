@@ -3,8 +3,11 @@ package com.sparta.outsourcing.domain.shop.controller;
 import com.sparta.outsourcing.domain.shop.dto.ShopRequestDto;
 import com.sparta.outsourcing.domain.shop.dto.ShopResponseDto;
 import com.sparta.outsourcing.domain.shop.service.ShopService;
+import com.sparta.outsourcing.domain.user.dto.AuthUser;
 import com.sparta.outsourcing.domain.user.entity.User;
+import com.sparta.outsourcing.domain.user.repository.UserRepository;
 import com.sparta.outsourcing.global.annotation.Auth;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,11 +23,16 @@ import java.util.List;
 @Validated
 public class ShopController {
     private final ShopService shopService;
+    private final UserRepository userRepository;
 
     // 가게 생성
     @PostMapping
-    public ResponseEntity<ShopResponseDto> createShop(@RequestBody @Valid ShopRequestDto shopRequest, @Auth User authUser) {
-        ShopResponseDto createdShop = shopService.createShop(shopRequest, authUser);
+    public ResponseEntity<ShopResponseDto> createShop(@RequestBody @Valid ShopRequestDto shopRequest, @Auth AuthUser authUser) {
+        // AuthUser의 정보를 사용해 User 엔티티를 찾음
+        User user = userRepository.findById(authUser.getId())  // authUser.getId() 또는 적절한 필드를 사용
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        ShopResponseDto createdShop = shopService.createShop(shopRequest, user);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdShop); // 201 Created 응답
     }
 
