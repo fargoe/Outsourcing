@@ -29,4 +29,19 @@ public class OrderController {
         Long userId = authUser.getId();
         return ResponseEntity.ok(orderService.createOrder(orderRequestDto, shopId, userId, authUser));
     }
+
+    // 주문 조회 (Owner)
+    @GetMapping("/shops/{shopId}/orders")
+    public ResponseEntity<List<OrderResponseDto>> getShopOrders(@PathVariable Long shopId,
+                                                                @Auth AuthUser authUser) {
+        Long ownerId = authUser.getId();
+        return ResponseEntity.ok(orderService.getShopOrders(shopId, ownerId));
+    }
+
+    // 주문 조회 (User)
+    @GetMapping("/orders")
+    public ResponseEntity<List<OrderResponseDto>> getUserOrders(@Auth AuthUser authUser) {
+        Long userId = authUser.getId();
+        return ResponseEntity.ok(orderService.getUserOrders(userId));
+    }
 }

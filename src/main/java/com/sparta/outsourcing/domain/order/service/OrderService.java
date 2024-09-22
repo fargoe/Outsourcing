@@ -56,6 +56,32 @@ public class OrderService {
         return new OrderResponseDto(order);
     }
 
+    //주문 조회(Owner)
+    @Transactional(readOnly = true)
+    public List<OrderResponseDto> getShopOrders(Long shopId, Long ownerId) {
+        Shop shop = shopRepository.findById(shopId)
+
+                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
+
+        if (!shop.getOwner().getId().equals(ownerId)) {
+            throw new IllegalArgumentException("가게 소유자가 아닙니다.");
+        }
+
+        return orderRepository.findByShopId(shopId)
+                .stream()
+                .map(OrderResponseDto::new)
+                .collect(Collectors.toList());
+    }
+
+    //주문 조회(User)
+    @Transactional(readOnly = true)
+    public List<OrderResponseDto> getUserOrders(Long userId) {
+        return orderRepository.findByUserId(userId)
+                .stream()
+                .map(OrderResponseDto::new)
+                .collect(Collectors.toList());
+    }
+
     //영업 시간 확인
     private boolean isShopOpen(Shop shop) {
         LocalTime now = LocalTime.now();
