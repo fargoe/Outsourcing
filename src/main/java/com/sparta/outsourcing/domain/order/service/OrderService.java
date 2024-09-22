@@ -11,11 +11,13 @@ import com.sparta.outsourcing.domain.shop.entity.Shop;
 import com.sparta.outsourcing.domain.shop.repository.ShopRepository;
 import com.sparta.outsourcing.domain.user.dto.AuthUser;
 import com.sparta.outsourcing.domain.user.entity.UserRoleEnum;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.file.AccessDeniedException;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,21 +35,21 @@ public class OrderService {
     @Transactional
     public OrderResponseDto createOrder(OrderRequestDto orderRequestDto, Long shopId, Long userId, AuthUser authUser) {
         if (authUser.getRole() == UserRoleEnum.OWNER) {
-            throw new IllegalArgumentException("사장님 계정으로는 주문을 할 수 없습니다.");
+            throw new SecurityException("사장님 계정으로는 주문을 할 수 없습니다.");
         }
 
         Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다."));
 
         if (!isShopOpen(shop)) {
-            throw new IllegalArgumentException("가게의 영업 시간이 아닙니다.");
+            throw new IllegalStateException("가게의 영업 시간이 아닙니다.");
         }
 
         Menu menu = menuRepository.findByShopIdAndId(shopId, orderRequestDto.getMenuId())
-                .orElseThrow(() -> new IllegalArgumentException("해당 가게에 메뉴가 존재하지 않습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 가게에 메뉴가 존재하지 않습니다."));
 
         if (menu.getPrice().compareTo(shop.getMinOrderAmount()) < 0) {
-            throw new IllegalArgumentException("최소 주문 금액을 만족하지 않습니다.");
+            throw new IllegalStateException("최소 주문 금액을 만족하지 않습니다.");
         }
 
         Order order = new Order(userId, shop, menu, orderRequestDto.getAddress(), orderRequestDto.getPhoneNumber());
@@ -61,10 +63,10 @@ public class OrderService {
     public List<OrderResponseDto> getShopOrders(Long shopId, Long ownerId) {
         Shop shop = shopRepository.findById(shopId)
 
-                .orElseThrow(() -> new IllegalArgumentException("가게를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다."));
 
         if (!shop.getOwner().getId().equals(ownerId)) {
-            throw new IllegalArgumentException("가게 소유자가 아닙니다.");
+            throw new SecurityException("가게 소유자가 아닙니다.");
         }
 
         return orderRepository.findByShopId(shopId)
@@ -86,11 +88,11 @@ public class OrderService {
     @Transactional
     public String updateOrderStatus(Long orderId, String newStatus, Long ownerId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
 
         Shop shop = order.getShop();
         if (!shop.getOwner().getId().equals(ownerId)) {
-            throw new IllegalArgumentException("해당 주문을 수정할 권한이 없습니다.");
+            throw new SecurityException("해당 주문을 수정할 권한이 없습니다.");
         }
 
         // 현재 주문 상태를 가져오고, 새로 변경할 상태를 파라미터로 받음
