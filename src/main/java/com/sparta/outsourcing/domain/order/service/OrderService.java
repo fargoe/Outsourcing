@@ -82,6 +82,36 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    //주문 상태 변경
+    @Transactional
+    public String updateOrderStatus(Long orderId, String newStatus, Long ownerId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+
+        Shop shop = order.getShop();
+        if (!shop.getOwner().getId().equals(ownerId)) {
+            throw new IllegalArgumentException("해당 주문을 수정할 권한이 없습니다.");
+        }
+
+        // 현재 주문 상태를 가져오고, 새로 변경할 상태를 파라미터로 받음
+        OrderStatus currentStatus = order.getOrderStatus();
+        OrderStatus newOrderStatus = OrderStatus.valueOf(newStatus.toUpperCase());
+
+        // 상태 전환이 유효한지 확인
+        if (!isValidStatusTransition(currentStatus, newOrderStatus)) {
+            throw new IllegalArgumentException(getInvalidStatusTransitionMessage(currentStatus, newOrderStatus));
+        }
+
+        if (currentStatus == OrderStatus.COMPLETED || currentStatus == OrderStatus.CANCELED) {
+            throw new IllegalStateException("완료되거나 취소된 주문의 상태는 변경할 수 없습니다.");
+        }
+
+        order.changeOrderStatus(newOrderStatus);
+        orderRepository.save(order);
+
+        return "주문 상태가 성공적으로 변경되었습니다.";
+    }
+
     //영업 시간 확인
     private boolean isShopOpen(Shop shop) {
         LocalTime now = LocalTime.now();
@@ -96,4 +126,43 @@ public class OrderService {
         }
     }
 
+    private String getInvalidStatusTransitionMessage(OrderStatus currentStatus, OrderStatus newStatus) {
+        switch (currentStatus) {
+            case PENDING:
+                return "현재 상태에서는 수락 또는 취소만 가능합니다.";
+            case ACCEPTED:
+                return "주문이 수락된 상태입니다. 진행 중으로 변경만 가능합니다.";
+            case IN_PROGRESS:
+                return "주문이 진행 중인 상태입니다. 완료만 가능합니다.";
+            case COMPLETED:
+                return "이미 완료된 주문의 상태는 변경할 수 없습니다.";
+            case CANCELED:
+                return "취소된 주문의 상태는 변경할 수 없습니다.";
+            default:
+                return "주문 상태를 이전 상태로 변경할 수 없습니다.";
+        }
+    }
+
+    // 상태 전환 유효 체크
+    private boolean isValidStatusTransition(OrderStatus currentStatus, OrderStatus newStatus) {
+        // 완료 또는 취소된 주문은 상태 전환이 불가능함
+        if (currentStatus == OrderStatus.COMPLETED || currentStatus == OrderStatus.CANCELED) {
+            return false;
+        }
+
+        switch (currentStatus) {
+            case PENDING:
+                // 대기 중인 주문은 수락으로만 전환 가능
+                return newStatus == OrderStatus.ACCEPTED;
+            case ACCEPTED:
+                // 수락된 주문은 진행 중으로만 전환 가능 (취소 불가)
+                return newStatus == OrderStatus.IN_PROGRESS;
+            case IN_PROGRESS:
+                // 진행 중인 주문은 완료로만 전환 가능 (취소 불가)
+                return newStatus == OrderStatus.COMPLETED;
+            default:
+                return false;
+        }
+    }
 }
+
