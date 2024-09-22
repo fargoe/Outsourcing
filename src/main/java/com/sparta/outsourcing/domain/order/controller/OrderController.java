@@ -44,4 +44,13 @@ public class OrderController {
         Long userId = authUser.getId();
         return ResponseEntity.ok(orderService.getUserOrders(userId));
     }
+
+    // 주문 상태 변경
+    @PatchMapping("/orders/{orderId}/status")
+    public ResponseEntity<String> updateOrderStatus(@PathVariable Long orderId,
+                                                    @RequestBody OrderStatusRequestDto orderStatusRequestDto,
+                                                    @Auth AuthUser authUser) {
+        Long ownerId = authUser.getId();
+        return ResponseEntity.ok(orderService.updateOrderStatus(orderId, orderStatusRequestDto.getNewStatus(), ownerId));
+    }
 }
