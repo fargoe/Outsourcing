@@ -7,8 +7,8 @@ import com.sparta.outsourcing.domain.review.dto.ReviewRequestDto;
 import com.sparta.outsourcing.domain.review.dto.ReviewResponseDto;
 import com.sparta.outsourcing.domain.review.entity.Review;
 import com.sparta.outsourcing.domain.review.repository.ReviewRepository;
-import com.sparta.outsourcing.domain.shop.entity.Shop;
 import com.sparta.outsourcing.domain.shop.repository.ShopRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,14 +29,14 @@ public class ReviewService {
     public ReviewResponseDto createReview(Long orderId, ReviewRequestDto reviewRequestDto, Long userId) {
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("주문을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("주문을 찾을 수 없습니다."));
 
         if (!order.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("해당 주문의 리뷰를 작성할 권한이 없습니다.");
+            throw new SecurityException("해당 주문의 리뷰를 작성할 권한이 없습니다.");
         }
 
         if (order.getOrderStatus() != OrderStatus.COMPLETED) {
-            throw new IllegalArgumentException("배달 완료된 주문에만 리뷰를 작성할 수 있습니다.");
+            throw new IllegalStateException("배달 완료된 주문에만 리뷰를 작성할 수 있습니다.");
         }
 
         if (reviewRepository.existsByOrderId(orderId)) {
@@ -57,7 +57,7 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public List<ReviewResponseDto> getShopReviews(Long shopId, Integer minRating, Integer maxRating) {
         shopRepository.findById(shopId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 가게를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 가게를 찾을 수 없습니다."));
 
         // 별점 범위 검증
         if (minRating != null && (minRating < 1 || minRating > 5)) {

@@ -24,14 +24,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
-    // EntityNotFoundException 처리
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex, WebRequest request) {
-        String uri = request.getDescription(false).replace("uri=", "");
-        log.error("[{}] 리소스를 찾을 수 없음 - URI: {}, 메시지: {}", LocalDateTime.now(), uri, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-    }
-
     // IllegalStateException 처리
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<String> handleIllegalStateException(IllegalStateException ex, WebRequest request) {
@@ -40,12 +32,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
-    // AccessDeniedException 처리
+    // EntityNotFoundException 처리
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex, WebRequest request) {
+        String uri = request.getDescription(false).replace("uri=", "");
+        log.error("[{}] 리소스를 찾을 수 없음 - URI: {}, 메시지: {}", LocalDateTime.now(), uri, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    // SecurityException 처리
     @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<String> handleAccessDeniedException(AccessDeniedException ex, WebRequest request) {
+    public ResponseEntity<String> handleSecurityException(SecurityException ex, WebRequest request) {
         String uri = request.getDescription(false).replace("uri=", "");
         log.error("[{}] 권한 없음 - URI: {}, 메시지: {}", LocalDateTime.now(), uri, ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
-
 }
