@@ -47,4 +47,12 @@ public class GlobalExceptionHandler {
         log.error("[{}] 권한 없음 - URI: {}, 메시지: {}", LocalDateTime.now(), uri, ex.getMessage());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
+
+    // 알 수 없는 예외에 대한 처리
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleGlobalException(Exception ex, WebRequest request) {
+        String uri = request.getDescription(false).replace("uri=", "");
+        log.error("[{}] 알 수 없는 오류 발생 - URI: {}, 메시지: {}", LocalDateTime.now(), uri, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예기치 못한 오류가 발생했습니다. 다시 시도해 주세요.");
+    }
 }
