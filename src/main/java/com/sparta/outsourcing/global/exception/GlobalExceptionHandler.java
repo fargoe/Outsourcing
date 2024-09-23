@@ -48,11 +48,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
 
+    // RuntimeException 처리
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleRuntimeException(RuntimeException ex, WebRequest request) {
+        String uri = request.getDescription(false).replace("uri=", "");
+        log.error("[{}] 런타임 예외 발생 - URI: {}, 메시지: {}", LocalDateTime.now(), uri, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(ex.getMessage());
+    }
+
     // 알 수 없는 예외에 대한 처리
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGlobalException(Exception ex, WebRequest request) {
         String uri = request.getDescription(false).replace("uri=", "");
         log.error("[{}] 알 수 없는 오류 발생 - URI: {}, 메시지: {}", LocalDateTime.now(), uri, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("예기치 못한 오류가 발생했습니다. 다시 시도해 주세요.");
+        String responseMessage = String.format("예기치 못한 오류가 발생했습니다. URI: %s, 메시지: %s", uri, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseMessage);
     }
 }
