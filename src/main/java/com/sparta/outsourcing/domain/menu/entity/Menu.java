@@ -1,5 +1,6 @@
 package com.sparta.outsourcing.domain.menu.entity;
 
+import com.sparta.outsourcing.domain.shop.entity.Shop;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,8 +22,12 @@ public class Menu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "shop_id", nullable = false)
+    @Column(name = "shop_id", insertable = false, updatable = false)
     private Long shopId;
+
+    @ManyToOne
+    @JoinColumn(name = "shop_id", nullable = false)
+    private Shop shop;
 
     @Column(name = "menu_name", nullable = false, length = 255)
     private String menuName;

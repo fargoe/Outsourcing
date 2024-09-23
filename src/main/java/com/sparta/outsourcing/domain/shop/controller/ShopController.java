@@ -37,33 +37,41 @@ public class ShopController {
     }
 
     // 가게 수정
-    @PutMapping("/{shop_Id}")
+    @PutMapping("/{shopId}")
     public ResponseEntity<ShopResponseDto> updateShop(
             @PathVariable Long shopId,
             @RequestBody ShopRequestDto shopRequest,
-            @Auth User authUser) {
-        ShopResponseDto updatedShop = shopService.updateShop(shopId, shopRequest, authUser);
+            @Auth AuthUser authUser) {
+
+        User user = userRepository.findById(authUser.getId())
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        ShopResponseDto updatedShop = shopService.updateShop(shopId, shopRequest, user);
         return ResponseEntity.ok(updatedShop);
     }
 
     // 가게 다건 조회
     @GetMapping("/search")
-    public ResponseEntity<List<ShopResponseDto>> getShopsByName(@RequestParam String name) {
+    public ResponseEntity<List<ShopResponseDto>> getShopsByName(@RequestParam(value = "name", required = false, defaultValue = "defaultName") String name) {
         List<ShopResponseDto> shops = shopService.getShopsByName(name);
         return ResponseEntity.ok(shops);
     }
 
     // 가게 단건 조회
-    @GetMapping("/{shop_Id}")
+    @GetMapping("/{shopId}")
     public ResponseEntity<ShopResponseDto> getShopById(@PathVariable Long shopId) {
         ShopResponseDto shop = shopService.getShopById(shopId);
         return ResponseEntity.ok(shop);
+    }@DeleteMapping("/{shopId}/close")
+    public ResponseEntity<Void> closeShop(@PathVariable Long shopId, @Auth AuthUser authUser) {
+
+        User user = userRepository.findById(authUser.getId())
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        shopService.closeShop(shopId, user);
+        return ResponseEntity.noContent().build(); // 204 No Content 응답
     }
 
     // 가게 폐업
-    @DeleteMapping("/{shop_Id}/close")
-    public ResponseEntity<Void> closeShop(@PathVariable Long shopId, @Auth User authUser) {
-        shopService.closeShop(shopId, authUser);
-        return ResponseEntity.noContent().build(); // 204 No Content 응답
-    }
+
 }
