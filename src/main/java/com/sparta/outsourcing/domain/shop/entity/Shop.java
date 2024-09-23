@@ -1,5 +1,6 @@
 package com.sparta.outsourcing.domain.shop.entity;
 
+import com.sparta.outsourcing.domain.menu.entity.Menu;
 import com.sparta.outsourcing.domain.user.entity.Timestamped;
 import com.sparta.outsourcing.domain.user.entity.User;
 import jakarta.persistence.*;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -32,6 +34,10 @@ public class Shop extends Timestamped {
     private BigDecimal minOrderAmount;
 
     private boolean closed;
+
+    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Menu> menus; // Shop과 Menu의 관계를 정의
+
 
     @Builder
     public Shop(User owner, String name, LocalTime opentime, LocalTime closetime, BigDecimal minOrderAmount, boolean closed) {
