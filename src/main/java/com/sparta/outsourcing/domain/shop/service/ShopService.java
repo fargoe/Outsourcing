@@ -11,6 +11,7 @@ import com.sparta.outsourcing.domain.user.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -109,6 +110,7 @@ public class ShopService {
     }
 
     // 가게 단건 조회
+    @Transactional
     public ShopResponseDto getShopById(Long shopId) {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다."));
@@ -137,6 +139,7 @@ public class ShopService {
         );
     }
 
+    // 가게 폐업
     public void closeShop(Long shopId, User user) {
         // 해당 가게 찾기
         Shop shop = shopRepository.findById(shopId)
