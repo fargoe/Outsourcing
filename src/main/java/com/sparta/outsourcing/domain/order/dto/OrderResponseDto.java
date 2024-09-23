@@ -22,8 +22,8 @@ public class OrderResponseDto {
         this.orderId = order.getId();
         this.shopId = order.getShop().getId();
         this.menuId = order.getMenu().getId();
-        this.menuName = order.getMenu().getMenuName();
-        this.menuPrice = order.getMenu().getPrice().doubleValue();
+        this.menuName = order.getMenuName();  // 저장된 메뉴 이름 사용
+        this.menuPrice = order.getMenuPrice();  // 저장된 메뉴 가격 사용
         this.address = order.getAddress();
         this.phoneNumber = order.getPhoneNumber();
         this.orderStatus = order.getOrderStatus();
