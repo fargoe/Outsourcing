@@ -7,7 +7,6 @@ import com.sparta.outsourcing.domain.shop.entity.Shop;
 import com.sparta.outsourcing.domain.shop.repository.ShopRepository;
 import com.sparta.outsourcing.domain.user.entity.User;
 import com.sparta.outsourcing.domain.user.entity.UserRoleEnum;
-import com.sparta.outsourcing.domain.user.repository.UserRepository;
 import com.sparta.outsourcing.domain.user.service.UserService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +19,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ShopService {
     private final ShopRepository shopRepository;
-    private final UserRepository userRepository;
     private final UserService userService;
 
     // 가게 생성
@@ -51,13 +49,13 @@ public class ShopService {
     }
 
     // 가게 수정
-    public ShopResponseDto updateShop(Long shopId, ShopRequestDto shopRequest, User authUser) {
+    public ShopResponseDto updateShop(Long shopId, ShopRequestDto shopRequest, User user) {
         // 해당 가게 찾기
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 가게를 찾을 수 없습니다."));
 
         // 사용자가 가게 소유자인지 확인
-        if (!shop.getOwner().equals(authUser)) {
+        if (!shop.getOwner().getId().equals(user.getId())) {
             throw new SecurityException("가게 수정 권한이 없습니다.");
         }
 
@@ -139,13 +137,13 @@ public class ShopService {
         );
     }
 
-    public void closeShop(Long shopId, User authUser) {
+    public void closeShop(Long shopId, User user) {
         // 해당 가게 찾기
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 가게를 찾을 수 없습니다."));
 
         // 사용자가 가게 소유자인지 확인
-        if (!shop.getOwner().equals(authUser)) {
+        if (!shop.getOwner().getId().equals(user.getId())) {
             throw new SecurityException("가게 폐업 권한이 없습니다.");
         }
 
