@@ -31,6 +31,9 @@ public class Order extends Timestamped {
     private String address;
     private String phoneNumber;
 
+    private String menuName;  // 주문 당시 메뉴 이름 저장
+    private double menuPrice;  // 주문 당시 메뉴 가격 저장
+
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.PENDING;
 
@@ -40,6 +43,8 @@ public class Order extends Timestamped {
         this.menu = menu;
         this.address = address;
         this.phoneNumber = phoneNumber;
+        this.menuName = menu.getMenuName();  // 주문 당시 메뉴 이름 저장
+        this.menuPrice = menu.getPrice().doubleValue();  // 주문 당시 메뉴 가격 저장
     }
 
     public void changeOrderStatus(OrderStatus newStatus) {
