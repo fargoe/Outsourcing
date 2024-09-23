@@ -81,24 +81,22 @@ public class MenuService {
         Menu menu = menuRepository.findById(menuId)
                 .orElseThrow(() -> new EntityNotFoundException("해당 메뉴가 존재하지 않습니다."));
 
-
-        if (optionalMenu.isPresent()) {
-            menu = optionalMenu.get();
-            if (menu.getShopId().equals(shopId)) {
-                menu = menu.toBuilder()
-                        .menuName(requestDto.getMenu_name())
-                        .price(requestDto.getPrice())
-                        .build();
-                menuRepository.save(menu);
-                return MenuResponseDto.builder()
-                        .message("메뉴 수정 완료")
-                        .data(MenuResponseDto.Data.builder()
-                                .status("un_deletable")
-                                .build())
-                        .build();
-            }
+        menu = optionalMenu.get();
+        if (menu.getShopId().equals(shopId)) {
+            menu = menu.toBuilder()
+                    .menuName(requestDto.getMenu_name())
+                    .price(requestDto.getPrice())
+                    .build();
+            menuRepository.save(menu);
+            return MenuResponseDto.builder()
+                    .message("메뉴 수정 완료")
+                    .data(MenuResponseDto.Data.builder()
+                            .status("un_deletable")
+                            .build())
+                    .build();
+        }else{
+            throw new RuntimeException("메뉴가 존재하지 않습니다.");
         }
-        throw new RuntimeException("메뉴를 수정할 수 없습니다.");
     }
 
     //메뉴 삭제
