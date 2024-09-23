@@ -60,6 +60,9 @@ public class UserService {
         String email = userRequest.getEmail();
         String password = userRequest.getPassword();
         User user = (User) userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을수없습니다"));
+        if(userRepository.findDeletedEmail(email).isPresent()){
+            throw new IllegalArgumentException("이미 탈퇴한 이메일 입니다");
+        }
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new IllegalArgumentException("잘못된 비밀 번호를 입력하셨습니다");
         }

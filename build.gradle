@@ -24,6 +24,13 @@ repositories {
 }
 
 dependencies {
+    // [필수] mockito 의존성 추가
+    testImplementation 'org.mockito:mockito-core:5.8.0'
+
+    // [선택] spring-boot-starter-test를 사용하지 않는 경우 추가 필요
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.8.0'
+    //json
+    implementation group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
     //bcrypt
     implementation 'at.favre.lib:bcrypt:0.10.2'
     //JWT
