@@ -16,4 +16,4 @@ public enum UserRoleEnum {
         public static final String USER = "ROLE_USER";
         public static final String OWNER = "ROLE_OWNER";
     }
-    }
+}

@@ -26,22 +26,22 @@ public class UserService {
 
     public UserResponseDto signup(@Valid UserRequestDto userRequest, HttpServletResponse res) {
         String email = userRequest.getEmail();
-        //비밀번호 암호와
+        //비밀번호 암호화
         String password = passwordEncoder.encode(userRequest.getPassword());
         //이메일 중복 검증
         if (userRepository.findByEmail(email).isPresent()){
-            throw new IllegalArgumentException("이미 가입된 이메일 입니다.");
+            throw new IllegalArgumentException("이미 가입된 이메일입니다.");
         }
         UserRoleEnum role = UserRoleEnum.USER;
 
         if(userRepository.findDeletedEmail(email).isPresent()){
-            throw new IllegalArgumentException("이미 탈퇴한 이메일 입니다");
+            throw new IllegalArgumentException("이미 탈퇴한 이메일입니다.");
         }
 
         //관리자 권한 검증
         if (userRequest.isOwner()) {
             if (!OWNER_TOKEN.equals(userRequest.getOwnerToken())) {
-                throw new IllegalArgumentException("관리자 암호가 일치 하지 않아 등록이 불가능합니다.");
+                throw new IllegalArgumentException("관리자 암호가 일치하지 않아 등록이 불가능합니다.");
             }
             role = UserRoleEnum.OWNER;
         }
@@ -59,12 +59,12 @@ public class UserService {
     public LoginResponseDto login(UserRequestDto userRequest, HttpServletResponse res) {
         String email = userRequest.getEmail();
         String password = userRequest.getPassword();
-        User user = (User) userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을수없습니다"));
+        User user = (User) userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("해당 유저를 찾을 수 없습니다."));
         if(userRepository.findDeletedEmail(email).isPresent()){
-            throw new IllegalArgumentException("이미 탈퇴한 이메일 입니다");
+            throw new IllegalArgumentException("이미 탈퇴한 이메일입니다.");
         }
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("잘못된 비밀 번호를 입력하셨습니다");
+            throw new IllegalArgumentException("잘못된 비밀 번호를 입력하셨습니다.");
         }
         String token = jwtUtil.createToken(user.getId());
         jwtUtil.addJwtToCookie(token, res);
@@ -72,12 +72,12 @@ public class UserService {
     }
 
     public String changePassword(Long userId, ChangePasswordRequestDto passwordRequest, AuthUser authUser) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을수 없습니다"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
         if(!userId.equals(authUser.getId())) {
             throw new IllegalArgumentException("유저 정보가 일치 하지 않습니다.");
         }
         if(!passwordEncoder.matches(passwordRequest.getOldPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("현제 비밀번호가 일치하지않습니다.");
+            throw new IllegalArgumentException("현제 비밀번호가 일치하지 않습니다.");
         }
         System.out.println(passwordRequest.getNewPassword());
         String password = passwordEncoder.encode(passwordRequest.getNewPassword());
@@ -87,15 +87,15 @@ public class UserService {
     }
 
     public String deleteUser(Long userId, AuthUser authUser, UserRequestDto userRequest) {
-            User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을수 없습니다"));
+            User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("유저를 찾을 수 없습니다."));
             String password = userRequest.getPassword();
 
             if(!userId.equals(authUser.getId())) {
-                throw new IllegalArgumentException("유저 정보가 일치 하지 않습니다.");
+                throw new IllegalArgumentException("유저 정보가 일치하지 않습니다.");
             }
 
             if(!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호가 일치 하지 않습니다.");
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
             }
 
             userRepository.delete(user);

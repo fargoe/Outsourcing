@@ -4,7 +4,6 @@ import com.sparta.outsourcing.domain.menu.dto.MenuRequestDto;
 import com.sparta.outsourcing.domain.menu.dto.MenuResponseDto;
 import com.sparta.outsourcing.domain.menu.service.MenuService;
 import com.sparta.outsourcing.domain.user.dto.AuthUser;
-import com.sparta.outsourcing.domain.user.entity.UserRoleEnum;
 import com.sparta.outsourcing.domain.user.repository.UserRepository;
 import com.sparta.outsourcing.global.annotation.Auth;
 import lombok.RequiredArgsConstructor;

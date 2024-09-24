@@ -48,7 +48,6 @@ public class Menu {
         status = "un_deletable"; // Default status when created
     }
 
-
     @PreUpdate
     protected void onUpdate() {
         modifiedAt = LocalDateTime.now();

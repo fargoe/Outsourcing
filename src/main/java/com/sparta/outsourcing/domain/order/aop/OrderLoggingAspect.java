@@ -1,8 +1,6 @@
 package com.sparta.outsourcing.domain.order.aop;
 
 import com.sparta.outsourcing.domain.order.dto.OrderResponseDto;
-import com.sparta.outsourcing.domain.order.entity.Order;
-import com.sparta.outsourcing.domain.order.entity.OrderStatus;
 import com.sparta.outsourcing.domain.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +60,4 @@ public class OrderLoggingAspect {
             throw ex;
         }
     }
-
-
 }
