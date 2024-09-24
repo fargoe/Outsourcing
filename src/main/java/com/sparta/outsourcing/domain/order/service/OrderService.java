@@ -17,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.file.AccessDeniedException;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,12 +40,16 @@ public class OrderService {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다."));
 
+        Menu menu = menuRepository.findByShopIdAndId(shopId, orderRequestDto.getMenuId())
+                .orElseThrow(() -> new EntityNotFoundException("해당 가게에 메뉴가 존재하지 않습니다."));
+
+        if (menu.getPrice() == null || shop.getMinOrderAmount() == null) {
+            throw new IllegalStateException("메뉴 가격 또는 최소 주문 금액이 잘못 설정되었습니다.");
+        }
+
         if (!isShopOpen(shop)) {
             throw new IllegalStateException("가게의 영업 시간이 아닙니다.");
         }
-
-        Menu menu = menuRepository.findByShopIdAndId(shopId, orderRequestDto.getMenuId())
-                .orElseThrow(() -> new EntityNotFoundException("해당 가게에 메뉴가 존재하지 않습니다."));
 
         if (menu.getPrice().compareTo(shop.getMinOrderAmount()) < 0) {
             throw new IllegalStateException("최소 주문 금액을 만족하지 않습니다.");
@@ -62,13 +65,11 @@ public class OrderService {
     @Transactional(readOnly = true)
     public List<OrderResponseDto> getShopOrders(Long shopId, Long ownerId) {
         Shop shop = shopRepository.findById(shopId)
-
                 .orElseThrow(() -> new EntityNotFoundException("가게를 찾을 수 없습니다."));
 
         if (!shop.getOwner().getId().equals(ownerId)) {
             throw new SecurityException("가게 소유자가 아닙니다.");
         }
-
         return orderRepository.findByShopId(shopId)
                 .stream()
                 .map(OrderResponseDto::new)
@@ -99,13 +100,16 @@ public class OrderService {
         OrderStatus currentStatus = order.getOrderStatus();
         OrderStatus newOrderStatus = OrderStatus.valueOf(newStatus.toUpperCase());
 
+        if (currentStatus == OrderStatus.COMPLETED) {
+            throw new IllegalStateException("이미 완료된 주문의 상태는 변경할 수 없습니다.");
+        } else if (currentStatus == OrderStatus.CANCELED) {
+            // 상태가 CANCELED일 경우 IllegalArgumentException 던짐
+            throw new IllegalStateException("취소된 주문의 상태는 변경할 수 없습니다.");
+        }
+
         // 상태 전환이 유효한지 확인
         if (!isValidStatusTransition(currentStatus, newOrderStatus)) {
             throw new IllegalArgumentException(getInvalidStatusTransitionMessage(currentStatus, newOrderStatus));
-        }
-
-        if (currentStatus == OrderStatus.COMPLETED || currentStatus == OrderStatus.CANCELED) {
-            throw new IllegalStateException("완료되거나 취소된 주문의 상태는 변경할 수 없습니다.");
         }
 
         order.changeOrderStatus(newOrderStatus);
@@ -117,7 +121,7 @@ public class OrderService {
     //영업 시간 확인
     private boolean isShopOpen(Shop shop) {
         LocalTime now = LocalTime.now();
-        LocalTime opentime = shop.getOpentime();
+         LocalTime opentime = shop.getOpentime();
         LocalTime closetime = shop.getClosetime();
 
         // 오픈 시간이 마감 시간보다 늦는 경우
@@ -151,7 +155,6 @@ public class OrderService {
         if (currentStatus == OrderStatus.COMPLETED || currentStatus == OrderStatus.CANCELED) {
             return false;
         }
-
         switch (currentStatus) {
             case PENDING:
                 // 대기 중인 주문은 수락으로만 전환 가능
@@ -163,8 +166,7 @@ public class OrderService {
                 // 진행 중인 주문은 완료로만 전환 가능 (취소 불가)
                 return newStatus == OrderStatus.COMPLETED;
             default:
-                return false;
+                throw new IllegalArgumentException("Unexpected OrderStatus: " + currentStatus);
         }
     }
 }
-
