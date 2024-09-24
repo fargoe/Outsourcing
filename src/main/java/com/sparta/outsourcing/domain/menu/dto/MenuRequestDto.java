@@ -12,8 +12,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class MenuRequestDto {
-    //private Long menuId;
-    //private Long shopId;
     private String menu_name;
     private BigDecimal price;
 }
