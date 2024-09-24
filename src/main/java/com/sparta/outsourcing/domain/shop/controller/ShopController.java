@@ -62,7 +62,10 @@ public class ShopController {
     public ResponseEntity<ShopResponseDto> getShopById(@PathVariable Long shopId) {
         ShopResponseDto shop = shopService.getShopById(shopId);
         return ResponseEntity.ok(shop);
-    }@DeleteMapping("/{shopId}/close")
+    }
+
+    // 가게 폐업
+    @DeleteMapping("/{shopId}/close")
     public ResponseEntity<Void> closeShop(@PathVariable Long shopId, @Auth AuthUser authUser) {
 
         User user = userRepository.findById(authUser.getId())
@@ -71,7 +74,4 @@ public class ShopController {
         shopService.closeShop(shopId, user);
         return ResponseEntity.noContent().build(); // 204 No Content 응답
     }
-
-    // 가게 폐업
-
 }

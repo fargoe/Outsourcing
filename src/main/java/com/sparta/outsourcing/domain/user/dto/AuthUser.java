@@ -1,9 +1,11 @@
 package com.sparta.outsourcing.domain.user.dto;
 
 import com.sparta.outsourcing.domain.user.entity.UserRoleEnum;
+import lombok.Builder;
 import lombok.Getter;
 
 @Getter
+@Builder
 public class AuthUser {
     private final Long id;
     private final UserRoleEnum role;
