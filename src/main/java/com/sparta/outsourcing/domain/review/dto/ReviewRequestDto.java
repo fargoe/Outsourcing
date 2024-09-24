@@ -18,6 +18,4 @@ public class ReviewRequestDto {
     @NotBlank
     @Size(max = 100)
     private String reviewContent;
-
-
 }

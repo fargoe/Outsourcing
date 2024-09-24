@@ -39,7 +39,7 @@ public class Shop extends Timestamped {
     private boolean closed;
 
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Menu> menus; // Shop과 Menu의 관계를 정의
+    private List<Menu> menus;
 
     // 가게 정보를 업데이트하는 메서드
     public void updateShopDetails(String name, LocalTime opentime, LocalTime closetime, BigDecimal minOrderAmount) {

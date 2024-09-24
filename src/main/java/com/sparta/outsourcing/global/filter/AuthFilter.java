@@ -44,7 +44,7 @@ public class AuthFilter implements Filter{
                 Claims info = jwtUtil.getUserInfoFromToken(token);
                 Long userId = Long.valueOf(info.getSubject());
                 User user = userRepository.findById(userId).orElseThrow(() -> {
-                            return new NullPointerException("Not Found User");
+                            return new NullPointerException("사용자를 찾을 수 없습니다.");
                         }
                 );
                 request.setAttribute("userId", user.getId());
@@ -52,7 +52,7 @@ public class AuthFilter implements Filter{
                 request.setAttribute("email", user.getEmail());
                 chain.doFilter(request, response);
             } else {
-                throw new IllegalArgumentException("Not Found Token");
+                throw new IllegalArgumentException("토큰을 찾을 수 없습니다.");
             }
         }
     }

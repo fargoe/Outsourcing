@@ -1,8 +1,9 @@
-package com.sparta.outsourcing.domain.shop.service;
+package com.sparta.outsourcing.domain.shop.cnotroller;
 
 import com.sparta.outsourcing.domain.shop.controller.ShopController;
 import com.sparta.outsourcing.domain.shop.dto.ShopRequestDto;
 import com.sparta.outsourcing.domain.shop.dto.ShopResponseDto;
+import com.sparta.outsourcing.domain.shop.service.ShopService;
 import com.sparta.outsourcing.domain.user.dto.AuthUser;
 import com.sparta.outsourcing.domain.user.entity.User;
 import com.sparta.outsourcing.domain.user.repository.UserRepository;
