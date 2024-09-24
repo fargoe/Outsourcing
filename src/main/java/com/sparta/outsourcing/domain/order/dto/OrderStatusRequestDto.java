@@ -7,4 +7,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OrderStatusRequestDto {
     private String newStatus;
+
+    public OrderStatusRequestDto(String newStatus) {
+        this.newStatus = newStatus;
+    }
 }

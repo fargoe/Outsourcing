@@ -25,14 +25,17 @@ public class Order extends Timestamped {
     private Shop shop;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "menu_id")
+    @JoinColumn(name = "menu_id", nullable = false)
     private Menu menu;
 
     private String address;
     private String phoneNumber;
 
-    private String menuName;  // 주문 당시 메뉴 이름 저장
-    private double menuPrice;  // 주문 당시 메뉴 가격 저장
+    @Column(nullable = false)
+    private String menuName; //주문 당시 메뉴 이름 저장
+
+    @Column(nullable = false)
+    private double menuPrice;  //주문 당시 메뉴 가격 저장
 
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.PENDING;
