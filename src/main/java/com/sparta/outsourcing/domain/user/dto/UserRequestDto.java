@@ -13,4 +13,8 @@ public class UserRequestDto {
     private String password;
     private boolean owner = false;
     private String ownerToken ="";
+
+    public UserRequestDto(String email) {
+        this.email = email;
+    }
 }
