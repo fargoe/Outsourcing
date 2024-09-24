@@ -27,3 +27,9 @@ spring:
 
   owner:
     token: ${OWNER_TOKEN}
+
+kakao:
+  client:
+    id: ${KAKAO_CLIENT_ID}
+    secret: ${KAKAO_CLIENT_SECRET}
+    redirect: ${KAKAO_REDIRECT_URL}

@@ -26,7 +26,7 @@ public class AuthFilter implements Filter{
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         String url = httpServletRequest.getRequestURI();
         if (StringUtils.hasText(url) &&
-                (url.equals("/api/user") || url.equals("/api/user/login"))
+                (url.equals("/api/user") || url.equals("/api/user/login")|| url.equals("/login/page")||url.startsWith("/api/user/kakao"))
         ) {
             chain.doFilter(request, response); // 다음 Filter 로 이동
         } else {
