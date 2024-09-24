@@ -4,6 +4,7 @@ import com.sparta.outsourcing.domain.order.entity.Order;
 import com.sparta.outsourcing.domain.user.entity.Timestamped;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -29,12 +30,13 @@ public class Review extends Timestamped {
     private String reviewContent;
     private LocalDateTime reviewTime;
 
-    public Review(Order order, Long userId, int rating, String reviewContent) {
+    @Builder
+    public Review(Order order, Long userId, Long shopId, int rating, String reviewContent, LocalDateTime reviewTime) {
         this.order = order;
         this.userId = userId;
-        this.shopId = order.getShop().getId();
+        this.shopId = shopId;
         this.rating = rating;
         this.reviewContent = reviewContent;
-        this.reviewTime = LocalDateTime.now();
+        this.reviewTime = reviewTime != null ? reviewTime : LocalDateTime.now();
     }
 }

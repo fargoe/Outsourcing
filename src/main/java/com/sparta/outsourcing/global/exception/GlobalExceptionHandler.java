@@ -7,9 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @ControllerAdvice
 @Slf4j
@@ -63,5 +66,14 @@ public class GlobalExceptionHandler {
         log.error("[{}] 알 수 없는 오류 발생 - URI: {}, 메시지: {}", LocalDateTime.now(), uri, ex.getMessage());
         String responseMessage = String.format("예기치 못한 오류가 발생했습니다. URI: %s, 메시지: %s", uri, ex.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(responseMessage);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, String>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", "잘못된 값이 입력되었습니다: " + ex.getName());
+        errorResponse.put("error", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 }
