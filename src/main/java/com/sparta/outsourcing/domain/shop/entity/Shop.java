@@ -4,6 +4,7 @@ import com.sparta.outsourcing.domain.menu.entity.Menu;
 import com.sparta.outsourcing.domain.user.entity.Timestamped;
 import com.sparta.outsourcing.domain.user.entity.User;
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,8 @@ import java.util.List;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "shop")
 public class Shop extends Timestamped {
@@ -37,17 +40,6 @@ public class Shop extends Timestamped {
 
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Menu> menus; // Shop과 Menu의 관계를 정의
-
-
-    @Builder
-    public Shop(User owner, String name, LocalTime opentime, LocalTime closetime, BigDecimal minOrderAmount, boolean closed) {
-        this.owner = owner;
-        this.name = name;
-        this.opentime = opentime;
-        this.closetime = closetime;
-        this.minOrderAmount = minOrderAmount;
-        this.closed = closed;
-    }
 
     // 가게 정보를 업데이트하는 메서드
     public void updateShopDetails(String name, LocalTime opentime, LocalTime closetime, BigDecimal minOrderAmount) {
