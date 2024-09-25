@@ -6,6 +6,7 @@ import com.sparta.outsourcing.domain.order.dto.OrderStatusRequestDto;
 import com.sparta.outsourcing.domain.order.service.OrderService;
 import com.sparta.outsourcing.domain.user.dto.AuthUser;
 import com.sparta.outsourcing.global.annotation.Auth;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class OrderController {
     // 주문 생성
     @PostMapping("/shops/{shopId}/orders")
     public ResponseEntity<OrderResponseDto> createOrder(@PathVariable Long shopId,
-                                                        @RequestBody OrderRequestDto orderRequestDto,
+                                                        @Valid @RequestBody OrderRequestDto orderRequestDto,
                                                         @Auth AuthUser authUser) {
         Long userId = authUser.getId();
         return ResponseEntity.ok(orderService.createOrder(orderRequestDto, shopId, userId, authUser));
@@ -48,7 +49,7 @@ public class OrderController {
     // 주문 상태 변경
     @PatchMapping("/orders/{orderId}/status")
     public ResponseEntity<String> updateOrderStatus(@PathVariable Long orderId,
-                                                    @RequestBody OrderStatusRequestDto orderStatusRequestDto,
+                                                    @Valid @RequestBody OrderStatusRequestDto orderStatusRequestDto,
                                                     @Auth AuthUser authUser) {
         Long ownerId = authUser.getId();
         return ResponseEntity.ok(orderService.updateOrderStatus(orderId, orderStatusRequestDto.getNewStatus(), ownerId));

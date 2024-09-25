@@ -118,17 +118,17 @@ public class OrderService {
         return "주문 상태가 성공적으로 변경되었습니다.";
     }
 
-    //영업 시간 확인
+    // 영업시간 확인 메서드
     private boolean isShopOpen(Shop shop) {
         LocalTime now = LocalTime.now();
-         LocalTime opentime = shop.getOpentime();
-        LocalTime closetime = shop.getClosetime();
+        LocalTime openTime = shop.getOpentime();
+        LocalTime closeTime = shop.getClosetime();
 
-        // 오픈 시간이 마감 시간보다 늦는 경우
-        if (opentime.isAfter(closetime)) {
-            return now.isAfter(opentime) || now.isBefore(closetime);
+        // 영업 시간이 마감 시간보다 늦게 설정된 경우
+        if (openTime.isAfter(closeTime)) {
+            return now.isAfter(openTime) || now.isBefore(closeTime);
         } else {
-            return now.isAfter(opentime) && now.isBefore(closetime);
+            return now.isAfter(openTime) && now.isBefore(closeTime);
         }
     }
 

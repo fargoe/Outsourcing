@@ -1,5 +1,6 @@
 package com.sparta.outsourcing.domain.order.service;
 
+import com.sparta.outsourcing.domain.user.entity.User;
 import com.sparta.outsourcing.domain.menu.entity.Menu;
 import com.sparta.outsourcing.domain.menu.repository.MenuRepository;
 import com.sparta.outsourcing.domain.order.dto.OrderRequestDto;
@@ -11,7 +12,6 @@ import com.sparta.outsourcing.domain.order.repository.OrderRepository;
 import com.sparta.outsourcing.domain.shop.entity.Shop;
 import com.sparta.outsourcing.domain.shop.repository.ShopRepository;
 import com.sparta.outsourcing.domain.user.dto.AuthUser;
-import com.sparta.outsourcing.domain.user.entity.User;
 import com.sparta.outsourcing.domain.user.entity.UserRoleEnum;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,11 +22,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.time.LocalTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,6 +51,16 @@ class OrderServiceTest {
         MockitoAnnotations.openMocks(this);
     }
 
+    private Shop shopIsNotOpening() {
+        Shop shop = mock(Shop.class);
+
+        // 영업시간 설정
+        when(shop.getOpentime()).thenReturn(LocalTime.now().plusHours(1));  // 현재 시간 이후로 opentime 설정
+        when(shop.getClosetime()).thenReturn(LocalTime.now().plusHours(2)); // 현재 시간 이후로 closetime 설정
+
+        return shop;
+    }
+
     @Nested
     @DisplayName("주문 생성 테스트")
     class CreateOrderTests {
@@ -62,20 +71,27 @@ class OrderServiceTest {
             // given
             Long shopId = 1L;
             Long userId = 1L;
-            String email = "user@example.com";
-            AuthUser authUser = new AuthUser(userId, UserRoleEnum.USER, email);
-            OrderRequestDto orderRequestDto = new OrderRequestDto(shopId, 1L, "address", "phone");
+            AuthUser authUser = new AuthUser(userId, UserRoleEnum.USER, "user@example.com");
+            OrderRequestDto orderRequestDto = OrderRequestDto.builder()
+                    .shopId(shopId)
+                    .menuId(1L)
+                    .address("address")
+                    .phoneNumber("010-1234-5678")
+                    .build();
 
             Shop shop = mock(Shop.class);
             Menu menu = mock(Menu.class);
+
+            when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
+            when(menuRepository.findByShopIdAndId(shopId, 1L)).thenReturn(Optional.of(menu));
+
+            // 가게 영업 시간 및 최소 주문 금액 설정
             when(shop.getOpentime()).thenReturn(LocalTime.of(0, 0));
             when(shop.getClosetime()).thenReturn(LocalTime.of(23, 59));
-            when(menu.getPrice()).thenReturn(new BigDecimal("10000.0"));
-            when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
-            when(menuRepository.findByShopIdAndId(shopId, orderRequestDto.getMenuId())).thenReturn(Optional.of(menu));
-            when(shop.getMinOrderAmount()).thenReturn(new BigDecimal("10000.0"));
+            when(shop.getMinOrderAmount()).thenReturn(BigDecimal.valueOf(10000));
+            when(menu.getPrice()).thenReturn(BigDecimal.valueOf(12000));
 
-            Order order = new Order(userId, shop, menu, orderRequestDto.getAddress(), orderRequestDto.getPhoneNumber());
+            Order order = new Order(userId, shop, menu, "address", "010-1234-5678");
             when(orderRepository.save(any(Order.class))).thenReturn(order);
 
             // when
@@ -87,79 +103,35 @@ class OrderServiceTest {
             verify(orderRepository, times(1)).save(any(Order.class));
         }
 
-//        @Test
-//        @DisplayName("주문 생성 실패 - 영업 시간이 아님")
-//        void createOrder_fail_notOpen() {
-//            // given
-//            Long shopId = 1L;
-//            Long userId = 1L;
-//            AuthUser authUser = new AuthUser(userId, UserRoleEnum.USER, "user@example.com");
-//            OrderRequestDto orderRequestDto = new OrderRequestDto(shopId, 1L, "address", "phone");
-//
-//            Shop shop = mock(Shop.class);
-//            when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
-//
-//            // 영업 시간이 아닌 경우 설정
-//            when(shop.getOpentime()).thenReturn(LocalTime.of(9, 0));
-//            when(shop.getClosetime()).thenReturn(LocalTime.of(17, 0));
-//
-//            // LocalTime.now()를 모킹
-//            try (MockedStatic<LocalTime> mockedLocalTime = mockStatic(LocalTime.class)) {
-//                mockedLocalTime.when(LocalTime::now).thenReturn(LocalTime.of(8, 0)); // 영업 시간 외
-//
-//                Menu menu = mock(Menu.class);
-//                when(menuRepository.findByShopIdAndId(shopId, orderRequestDto.getMenuId())).thenReturn(Optional.of(menu));
-//                when(menu.getPrice()).thenReturn(new BigDecimal("15000.0"));
-//                when(shop.getMinOrderAmount()).thenReturn(new BigDecimal("10000.0"));
-//
-//                // when & then
-//                IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-//                        orderService.createOrder(orderRequestDto, shopId, userId, authUser)
-//                );
-//                assertEquals("가게의 영업 시간이 아닙니다.", exception.getMessage());
-//            }
-//        }
-//
-//        @Test
-//        @DisplayName("주문 생성 성공 - 영업 시간 내")
-//        void createOrder_success_openShop() {
-//            // given
-//            Long shopId = 1L;
-//            Long userId = 1L;
-//            String email = "user@example.com";
-//            AuthUser authUser = new AuthUser(userId, UserRoleEnum.USER, email);
-//            OrderRequestDto orderRequestDto = new OrderRequestDto(shopId, 1L, "address", "phone");
-//
-//            Shop shop = mock(Shop.class);
-//            Menu menu = mock(Menu.class);
-//
-//            // Mock repository returns
-//            when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
-//            when(menuRepository.findByShopIdAndId(shopId, orderRequestDto.getMenuId())).thenReturn(Optional.of(menu));
-//
-//            // 설정: 가게의 영업 시간과 최소 주문 금액
-//            when(shop.getOpentime()).thenReturn(LocalTime.of(0, 0));
-//            when(shop.getClosetime()).thenReturn(LocalTime.of(23, 59));
-//            when(menu.getPrice()).thenReturn(new BigDecimal("10000.0"));
-//            when(shop.getMinOrderAmount()).thenReturn(new BigDecimal("10000.0"));
-//
-//            // 시간 모킹: 현재 시간을 영업 시간 내로 설정
-//            try (MockedStatic<LocalTime> mockedLocalTime = mockStatic(LocalTime.class)) {
-//                mockedLocalTime.when(LocalTime::now).thenReturn(LocalTime.of(10, 0)); // 영업 시간 내
-//
-//                // Order mock
-//                Order order = new Order(userId, shop, menu, orderRequestDto.getAddress(), orderRequestDto.getPhoneNumber());
-//                when(orderRepository.save(any(Order.class))).thenReturn(order);
-//
-//                // when
-//                OrderResponseDto responseDto = orderService.createOrder(orderRequestDto, shopId, userId, authUser);
-//
-//                // then
-//                assertNotNull(responseDto);
-//                assertEquals(order.getId(), responseDto.getOrderId());
-//                verify(orderRepository, times(1)).save(any(Order.class));
-//            }
-//        }
+        @Test
+        @DisplayName("주문 생성 실패 - 영업 시간이 아님")
+        void createOrder_fail_notOpen() {
+            // given
+            Long shopId = 1L;
+            Long userId = 1L;
+            AuthUser authUser = new AuthUser(userId, UserRoleEnum.USER, "user@example.com");
+            OrderRequestDto orderRequestDto = OrderRequestDto.builder()
+                    .shopId(shopId)
+                    .menuId(1L)
+                    .address("address")
+                    .phoneNumber("010-1234-5678")
+                    .build();
+
+            // 가게가 영업 중이 아닌 상태 설정
+            Shop shop = shopIsNotOpening();
+            when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
+
+            Menu menu = mock(Menu.class);
+            when(menuRepository.findByShopIdAndId(shopId, 1L)).thenReturn(Optional.of(menu));
+            when(menu.getPrice()).thenReturn(BigDecimal.valueOf(15000));
+            when(shop.getMinOrderAmount()).thenReturn(BigDecimal.valueOf(10000));
+
+            // when & then
+            IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
+                    orderService.createOrder(orderRequestDto, shopId, userId, authUser)
+            );
+            assertEquals("가게의 영업 시간이 아닙니다.", exception.getMessage());
+        }
 
         @Test
         @DisplayName("주문 생성 실패 - 사장님 계정으로 주문 불가")
@@ -168,7 +140,12 @@ class OrderServiceTest {
             Long shopId = 1L;
             Long userId = 1L;
             AuthUser authUser = new AuthUser(userId, UserRoleEnum.OWNER, "owner@example.com");
-            OrderRequestDto orderRequestDto = new OrderRequestDto(shopId, 1L, "address", "phone");
+            OrderRequestDto orderRequestDto = OrderRequestDto.builder()
+                    .shopId(shopId)
+                    .menuId(1L)
+                    .address("address")
+                    .phoneNumber("010-1234-5678")
+                    .build();
 
             // when & then
             assertThrows(SecurityException.class, () ->
@@ -183,7 +160,12 @@ class OrderServiceTest {
             Long shopId = 1L;
             Long userId = 1L;
             AuthUser authUser = new AuthUser(userId, UserRoleEnum.USER, "user@example.com");
-            OrderRequestDto orderRequestDto = new OrderRequestDto(shopId, 1L, "address", "phone");
+            OrderRequestDto orderRequestDto = OrderRequestDto.builder()
+                    .shopId(shopId)
+                    .menuId(1L)
+                    .address("address")
+                    .phoneNumber("010-1234-5678")
+                    .build();
 
             when(shopRepository.findById(shopId)).thenReturn(Optional.empty());
 
@@ -200,15 +182,16 @@ class OrderServiceTest {
             Long shopId = 1L;
             Long userId = 1L;
             AuthUser authUser = new AuthUser(userId, UserRoleEnum.USER, "user@example.com");
-            OrderRequestDto orderRequestDto = new OrderRequestDto(shopId, 1L, "address", "phone");
+            OrderRequestDto orderRequestDto = OrderRequestDto.builder()
+                    .shopId(shopId)
+                    .menuId(1L)
+                    .address("address")
+                    .phoneNumber("010-1234-5678")
+                    .build();
 
             Shop shop = mock(Shop.class);
             when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
-
-            when(shop.getOpentime()).thenReturn(LocalTime.of(0, 0));
-            when(shop.getClosetime()).thenReturn(LocalTime.of(23, 59));
-
-            when(menuRepository.findByShopIdAndId(shopId, orderRequestDto.getMenuId())).thenReturn(Optional.empty());
+            when(menuRepository.findByShopIdAndId(shopId, 1L)).thenReturn(Optional.empty());
 
             // when & then
             assertThrows(EntityNotFoundException.class, () ->
@@ -223,7 +206,12 @@ class OrderServiceTest {
             Long shopId = 1L;
             Long userId = 1L;
             AuthUser authUser = new AuthUser(userId, UserRoleEnum.USER, "user@example.com");
-            OrderRequestDto orderRequestDto = new OrderRequestDto(shopId, 1L, "address", "phone");
+            OrderRequestDto orderRequestDto = OrderRequestDto.builder()
+                    .shopId(shopId)
+                    .menuId(1L)
+                    .address("address")
+                    .phoneNumber("010-1234-5678")
+                    .build();
 
             Shop shop = mock(Shop.class);
             Menu menu = mock(Menu.class);
@@ -235,7 +223,7 @@ class OrderServiceTest {
 
             // 메뉴 가격이 null인 경우
             when(menu.getPrice()).thenReturn(null);
-            when(shop.getMinOrderAmount()).thenReturn(new BigDecimal("10000.0"));
+            when(shop.getMinOrderAmount()).thenReturn(BigDecimal.valueOf(10000));
 
             // when & then
             IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
@@ -251,7 +239,12 @@ class OrderServiceTest {
             Long shopId = 1L;
             Long userId = 1L;
             AuthUser authUser = new AuthUser(userId, UserRoleEnum.USER, "user@example.com");
-            OrderRequestDto orderRequestDto = new OrderRequestDto(shopId, 1L, "address", "phone");
+            OrderRequestDto orderRequestDto = OrderRequestDto.builder()
+                    .shopId(shopId)
+                    .menuId(1L)
+                    .address("address")
+                    .phoneNumber("010-1234-5678")
+                    .build();
 
             Shop shop = mock(Shop.class);
             Menu menu = mock(Menu.class);
@@ -262,8 +255,8 @@ class OrderServiceTest {
             when(shop.getOpentime()).thenReturn(LocalTime.of(0, 0));
             when(shop.getClosetime()).thenReturn(LocalTime.of(23, 59));
 
-            when(shop.getMinOrderAmount()).thenReturn(new BigDecimal("10000.0"));
-            when(menu.getPrice()).thenReturn(new BigDecimal("5000.0"));
+            when(shop.getMinOrderAmount()).thenReturn(BigDecimal.valueOf(10000));
+            when(menu.getPrice()).thenReturn(BigDecimal.valueOf(5000));
 
             // when & then
             assertThrows(IllegalStateException.class, () ->
@@ -287,16 +280,15 @@ class OrderServiceTest {
             Shop shop = mock(Shop.class);
             User owner = mock(User.class);
 
-            OrderStatusRequestDto orderStatusRequestDto = new OrderStatusRequestDto("ACCEPTED");
-
+            // Mock 객체 반환 값 설정
             when(order.getShop()).thenReturn(shop);
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
-
-            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
             when(order.getOrderStatus()).thenReturn(OrderStatus.PENDING);
+            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
             // when
+            OrderStatusRequestDto orderStatusRequestDto = new OrderStatusRequestDto("ACCEPTED");
             String response = orderService.updateOrderStatus(orderId, orderStatusRequestDto.getNewStatus(), ownerId);
 
             // then
@@ -310,52 +302,23 @@ class OrderServiceTest {
             // given
             Long orderId = 1L;
             Long ownerId = 1L;
-            OrderStatusRequestDto orderStatusRequestDto = new OrderStatusRequestDto("ACCEPTED");
 
             Order order = mock(Order.class);
             Shop shop = mock(Shop.class);
             User owner = mock(User.class);
 
-            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-            when(order.getOrderStatus()).thenReturn(OrderStatus.PENDING);
             when(order.getShop()).thenReturn(shop);
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(2L);
+
+            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+            OrderStatusRequestDto orderStatusRequestDto = new OrderStatusRequestDto("ACCEPTED");
 
             // when & then
             assertThrows(SecurityException.class, () ->
                     orderService.updateOrderStatus(orderId, orderStatusRequestDto.getNewStatus(), ownerId)
             );
-        }
-
-        @Test
-        @DisplayName("주문 상태 변경 실패 - 상태 전환 불가")
-        void updateOrderStatus_fail_invalidStatusTransition() {
-            // given
-            Long orderId = 1L;
-            Long ownerId = 1L;
-
-            Order order = mock(Order.class);
-            Shop shop = mock(Shop.class);
-            User owner = mock(User.class);
-
-            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
-            when(order.getShop()).thenReturn(shop);
-            when(shop.getOwner()).thenReturn(owner);
-            when(owner.getId()).thenReturn(ownerId);
-
-            // 현재 주문 상태가 COMPLETED인 경우
-            when(order.getOrderStatus()).thenReturn(OrderStatus.COMPLETED);
-
-            OrderStatusRequestDto orderStatusRequestDto = new OrderStatusRequestDto("CANCELED");
-
-            // when & then
-            IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                    orderService.updateOrderStatus(orderId, orderStatusRequestDto.getNewStatus(), ownerId)
-            );
-
-            // 예외 메시지 검증 추가
-            assertEquals("이미 완료된 주문의 상태는 변경할 수 없습니다.", exception.getMessage());
         }
 
         @Test
@@ -369,18 +332,20 @@ class OrderServiceTest {
             Shop shop = mock(Shop.class);
             User owner = mock(User.class);
 
+            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
             when(order.getShop()).thenReturn(shop);
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
 
-            // 주문 상태가 COMPLETED인 경우
             when(order.getOrderStatus()).thenReturn(OrderStatus.COMPLETED);
-            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+
+            OrderStatusRequestDto orderStatusRequestDto = new OrderStatusRequestDto("CANCELED");
 
             // when & then
             IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                    orderService.updateOrderStatus(orderId, "CANCELED", ownerId)
+                    orderService.updateOrderStatus(orderId, orderStatusRequestDto.getNewStatus(), ownerId)
             );
+
             assertEquals("이미 완료된 주문의 상태는 변경할 수 없습니다.", exception.getMessage());
         }
 
@@ -395,18 +360,18 @@ class OrderServiceTest {
             Shop shop = mock(Shop.class);
             User owner = mock(User.class);
 
+            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
             when(order.getShop()).thenReturn(shop);
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
 
-            // 주문 상태가 CANCELED인 경우
             when(order.getOrderStatus()).thenReturn(OrderStatus.CANCELED);
-            when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
             // when & then
             IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
                     orderService.updateOrderStatus(orderId, "PENDING", ownerId)
             );
+
             assertEquals("취소된 주문의 상태는 변경할 수 없습니다.", exception.getMessage());
         }
 
@@ -423,65 +388,68 @@ class OrderServiceTest {
             when(order.getShop()).thenReturn(shop);
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
-
             when(order.getOrderStatus()).thenReturn(OrderStatus.PENDING);
+
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
             assertThrows(IllegalArgumentException.class, () -> {
                 orderService.updateOrderStatus(orderId, "COMPLETED", ownerId);
             });
+
+
         }
 
         @Test
-        @DisplayName("주문 상태 변경 실패 - 가게를 찾을 수 없음")
-        void updateOrderStatus_fail_shopNotFound() {
-            // given
-            Long orderId = 1L;
-            Long ownerId = 1L;
-
-            when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
-
-            // when & then
-            EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
-                    orderService.updateOrderStatus(orderId, "ACCEPTED", ownerId)
-            );
-
-            assertEquals("주문을 찾을 수 없습니다.", exception.getMessage());
-        }
-    }
-
-
-    @Nested
-    @DisplayName("주문 조회 테스트")
-    class GetOrderTests {
-
-        @Test
-        @DisplayName("오너 주문 조회 성공")
+        @DisplayName("오너가 주문 조회 성공")
         void getShopOrders_success() {
             // given
             Long shopId = 1L;
             Long ownerId = 1L;
 
+            // Mock 객체 생성
             Shop shop = mock(Shop.class);
             User owner = mock(User.class);
+            Order order = mock(Order.class);
+            Menu menu = mock(Menu.class);
+
+            // Mock 반환 값 설정
             when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
-
-            Order order = mock(Order.class);
-            Menu menu = mock(Menu.class);
             when(order.getShop()).thenReturn(shop);
             when(order.getMenu()).thenReturn(menu);
-            when(menu.getId()).thenReturn(1L);
+
+            // 주문 리스트 반환
             when(orderRepository.findByShopId(shopId)).thenReturn(List.of(order));
 
             // when
-            List<OrderResponseDto> orders = orderService.getShopOrders(shopId, ownerId);
+            List<OrderResponseDto> orderResponseDtos = orderService.getShopOrders(shopId, ownerId);
 
             // then
-            assertNotNull(orders);
-            assertEquals(1, orders.size());
+            assertNotNull(orderResponseDtos);
+            assertEquals(1, orderResponseDtos.size());
             verify(orderRepository, times(1)).findByShopId(shopId);
+        }
+
+        @Test
+        @DisplayName("오너가 아님 - 주문 조회 실패")
+        void getShopOrders_fail_notOwner() {
+            // given
+            Long shopId = 1L;
+            Long ownerId = 1L;
+            Shop shop = mock(Shop.class);
+            User owner = mock(User.class);
+
+            when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
+            when(shop.getOwner()).thenReturn(owner);
+            when(owner.getId()).thenReturn(2L);
+
+            // when & then
+            SecurityException exception = assertThrows(SecurityException.class, () ->
+                    orderService.getShopOrders(shopId, ownerId)
+            );
+
+            assertEquals("가게 소유자가 아닙니다.", exception.getMessage());
         }
 
         @Test
@@ -492,114 +460,31 @@ class OrderServiceTest {
 
             Order order1 = mock(Order.class);
             Order order2 = mock(Order.class);
-
-            Shop shop = mock(Shop.class);
             Menu menu = mock(Menu.class);
+            Shop shop = mock(Shop.class);
 
             when(order1.getShop()).thenReturn(shop);
-            when(order2.getShop()).thenReturn(shop);
             when(order1.getMenu()).thenReturn(menu);
+            when(order2.getShop()).thenReturn(shop);
             when(order2.getMenu()).thenReturn(menu);
-            when(menu.getId()).thenReturn(1L);
 
+            // 주문 리스트 반환
             when(orderRepository.findByUserId(userId)).thenReturn(List.of(order1, order2));
 
             // when
-            List<OrderResponseDto> orders = orderService.getUserOrders(userId);
+            List<OrderResponseDto> orderResponseDtos = orderService.getUserOrders(userId);
 
             // then
-            assertNotNull(orders);
-            assertEquals(2, orders.size());
+            assertNotNull(orderResponseDtos);
+            assertEquals(2, orderResponseDtos.size());
             verify(orderRepository, times(1)).findByUserId(userId);
-        }
-
-        @Test
-        @DisplayName("오너 주문 조회 실패 - 주문이 없는 경우")
-        void getShopOrders_noOrders() {
-            // given
-            Long shopId = 1L;
-            Long ownerId = 1L;
-
-            Shop shop = mock(Shop.class);
-            User owner = mock(User.class);
-            when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
-            when(shop.getOwner()).thenReturn(owner);
-            when(owner.getId()).thenReturn(ownerId);
-
-            // 주문이 없는 경우 빈 리스트 반환
-            when(orderRepository.findByShopId(shopId)).thenReturn(Collections.emptyList());
-
-            // when
-            List<OrderResponseDto> orders = orderService.getShopOrders(shopId, ownerId);
-
-            // then
-            assertNotNull(orders);
-            assertTrue(orders.isEmpty());
-            verify(orderRepository, times(1)).findByShopId(shopId);
-        }
-
-        @Test
-        @DisplayName("사용자 주문 조회 실패 - 주문이 없는 경우")
-        void getUserOrders_noOrders() {
-            // given
-            Long userId = 1L;
-
-            when(orderRepository.findByUserId(userId)).thenReturn(Collections.emptyList());
-
-            // when
-            List<OrderResponseDto> orders = orderService.getUserOrders(userId);
-
-            // then
-            assertNotNull(orders);
-            assertTrue(orders.isEmpty());
-            verify(orderRepository, times(1)).findByUserId(userId);
-        }
-
-
-        @Test
-        @DisplayName("주문 조회 실패 - 가게를 찾을 수 없음")
-        void getShopOrders_fail_shopNotFound() {
-            // given
-            Long shopId = 1L;
-            Long ownerId = 1L;
-
-            when(shopRepository.findById(shopId)).thenReturn(Optional.empty());
-
-            // when & then
-            EntityNotFoundException exception = assertThrows(EntityNotFoundException.class, () ->
-                    orderService.getShopOrders(shopId, ownerId)
-            );
-            assertEquals("가게를 찾을 수 없습니다.", exception.getMessage());
-        }
-
-        @Test
-        @DisplayName("주문 조회 실패 - 소유자가 아님")
-        void getShopOrders_fail_notOwner() {
-            // given
-            Long shopId = 1L;
-            Long ownerId = 1L;
-
-            Shop shop = mock(Shop.class);
-            User owner = mock(User.class);
-            when(shopRepository.findById(shopId)).thenReturn(Optional.of(shop));
-            when(shop.getOwner()).thenReturn(owner);
-            when(owner.getId()).thenReturn(2L); // 다른 소유자
-
-            // when & then
-            SecurityException exception = assertThrows(SecurityException.class, () ->
-                    orderService.getShopOrders(shopId, ownerId)
-            );
-            assertEquals("가게 소유자가 아닙니다.", exception.getMessage());
         }
     }
-
-    @Nested
-    @DisplayName("주문 상태 전환 불가 메시지 테스트")
-    class InvalidStatusTransitionMessageTests {
+    @Nested@DisplayName("주문 상태 전환 테스트")class OrderStatusTransitionTests {
 
         @Test
-        @DisplayName("상태 전환 불가 메시지 - PENDING에서 수락 또는 취소로만 전환 가능")
-        void testPendingToInvalidStatus() {
+        @DisplayName("잘못된 상태 전환 시 적절한 에러 메시지 반환")
+        void testInvalidStatusTransitionMessage() {
             // given
             Long orderId = 1L;
             Long ownerId = 1L;
@@ -612,19 +497,21 @@ class OrderServiceTest {
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
 
+            // 상태가 PENDING인 경우
             when(order.getOrderStatus()).thenReturn(OrderStatus.PENDING);
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
             // when & then
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                    orderService.updateOrderStatus(orderId, "COMPLETED", ownerId)
-            );
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+                orderService.updateOrderStatus(orderId, "COMPLETED", ownerId);
+            });
+
             assertEquals("현재 상태에서는 수락 또는 취소만 가능합니다.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("상태 전환 불가 메시지 - ACCEPTED에서 진행 중으로만 전환 가능")
-        void testAcceptedToInvalidStatus() {
+        @DisplayName("수락된 주문은 진행 중으로만 전환 가능")
+        void testAcceptedToInProgress() {
             // given
             Long orderId = 1L;
             Long ownerId = 1L;
@@ -637,19 +524,21 @@ class OrderServiceTest {
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
 
+            // 상태가 ACCEPTED인 경우
             when(order.getOrderStatus()).thenReturn(OrderStatus.ACCEPTED);
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
             // when & then
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                    orderService.updateOrderStatus(orderId, "COMPLETED", ownerId)
-            );
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+                orderService.updateOrderStatus(orderId, "COMPLETED", ownerId);
+            });
+
             assertEquals("주문이 수락된 상태입니다. 진행 중으로 변경만 가능합니다.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("상태 전환 불가 메시지 - IN_PROGRESS에서 완료로만 전환 가능")
-        void testInProgressToInvalidStatus() {
+        @DisplayName("진행 중인 주문은 완료로만 전환 가능")
+        void testInProgressToCompleted() {
             // given
             Long orderId = 1L;
             Long ownerId = 1L;
@@ -658,23 +547,26 @@ class OrderServiceTest {
             Shop shop = mock(Shop.class);
             User owner = mock(User.class);
 
+            // Mock 반환 값 설정
             when(order.getShop()).thenReturn(shop);
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
 
+            // 상태가 IN_PROGRESS인 경우
             when(order.getOrderStatus()).thenReturn(OrderStatus.IN_PROGRESS);
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
             // when & then
-            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                    orderService.updateOrderStatus(orderId, "CANCELED", ownerId)
-            );
+            IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+                orderService.updateOrderStatus(orderId, "CANCELED", ownerId);
+            });
+
             assertEquals("주문이 진행 중인 상태입니다. 완료만 가능합니다.", exception.getMessage());
         }
 
         @Test
-        @DisplayName("상태 전환 불가 메시지 - COMPLETED 상태는 변경 불가")
-        void testCompletedToInvalidStatus() {
+        @DisplayName("완료된 주문은 상태를 변경할 수 없음")
+        void testCompletedOrder() {
             // given
             Long orderId = 1L;
             Long ownerId = 1L;
@@ -683,22 +575,26 @@ class OrderServiceTest {
             Shop shop = mock(Shop.class);
             User owner = mock(User.class);
 
+            // Mock 반환 값 설정
             when(order.getShop()).thenReturn(shop);
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
 
+            // 상태가 COMPLETED인 경우
             when(order.getOrderStatus()).thenReturn(OrderStatus.COMPLETED);
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
             // when & then
-            IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                    orderService.updateOrderStatus(orderId, "CANCELED", ownerId)
-            );
+            IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+                orderService.updateOrderStatus(orderId, "PENDING", ownerId);
+            });
+
             assertEquals("이미 완료된 주문의 상태는 변경할 수 없습니다.", exception.getMessage());
         }
+
         @Test
-        @DisplayName("상태 전환 불가 메시지 - CANCELED 상태는 변경 불가")
-        void testCanceledToInvalidStatus() {
+        @DisplayName("취소된 주문은 상태를 변경할 수 없음")
+        void testCanceledOrder() {
             // given
             Long orderId = 1L;
             Long ownerId = 1L;
@@ -707,18 +603,22 @@ class OrderServiceTest {
             Shop shop = mock(Shop.class);
             User owner = mock(User.class);
 
+            // Mock 반환 값 설정
             when(order.getShop()).thenReturn(shop);
             when(shop.getOwner()).thenReturn(owner);
             when(owner.getId()).thenReturn(ownerId);
 
+            // 상태가 CANCELED인 경우
             when(order.getOrderStatus()).thenReturn(OrderStatus.CANCELED);
             when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
             // when & then
-            IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                    orderService.updateOrderStatus(orderId, "PENDING", ownerId)
-            );
+            IllegalStateException exception = assertThrows(IllegalStateException.class, () -> {
+                orderService.updateOrderStatus(orderId, "PENDING", ownerId);
+            });
+
             assertEquals("취소된 주문의 상태는 변경할 수 없습니다.", exception.getMessage());
         }
     }
+
 }

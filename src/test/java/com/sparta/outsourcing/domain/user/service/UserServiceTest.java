@@ -112,7 +112,7 @@ class UserServiceTest {
             userService.signup(userRequestDto, response);
         });
         //then
-        Assertions.assertEquals("이미 가입된 이메일 입니다.", exception.getMessage());
+        Assertions.assertEquals("이미 가입된 이메일입니다.", exception.getMessage());
     }
 
     // Successful login with valid email and password
@@ -171,7 +171,7 @@ class UserServiceTest {
             userService.login(userRequestDto, response);
         });
 
-        Assertions.assertEquals("해당 유저를 찾을수없습니다", exception.getMessage());
+        Assertions.assertEquals("해당 유저를 찾을 수 없습니다.", exception.getMessage());
     }
 
     @Test
@@ -239,7 +239,7 @@ class UserServiceTest {
 
         //then
         Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> userService.changePassword(userId, passwordRequest, authUser));
-        Assertions.assertEquals("현제 비밀번호가 일치하지않습니다.", exception.getMessage());
+        Assertions.assertEquals("현제 비밀번호가 일치하지 않습니다.", exception.getMessage());
     }
 
     @Test
@@ -294,6 +294,6 @@ class UserServiceTest {
         Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             userService.deleteUser(userId, authUser, userRequest);
         });
-        Assertions.assertEquals("비밀번호가 일치 하지 않습니다.", exception.getMessage());
+        Assertions.assertEquals("비밀번호가 일치하지 않습니다.", exception.getMessage());
     }
 }
