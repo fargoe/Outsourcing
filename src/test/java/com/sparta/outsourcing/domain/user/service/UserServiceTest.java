@@ -171,7 +171,7 @@ class UserServiceTest {
             userService.login(userRequestDto, response);
         });
 
-        Assertions.assertEquals("해당 유저를 찾을 수 없습니다", exception.getMessage());
+        Assertions.assertEquals("해당 유저를 찾을 수 없습니다.", exception.getMessage());
     }
 
     @Test
