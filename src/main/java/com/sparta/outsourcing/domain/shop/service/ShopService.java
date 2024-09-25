@@ -72,7 +72,8 @@ public class ShopService {
         Shop updatedShop = shopRepository.save(shop);
 
         // 수정된 가게에 대해 메뉴는 그대로 유지
-        List<MenuResponseDto> menuList = updatedShop.getMenus().stream()
+        List<MenuResponseDto> menuList = shop.getMenus().stream()
+                .filter(menu -> !"deleted".equals(menu.getStatus()))  // 삭제된 메뉴 필터링
                 .map(menu -> MenuResponseDto.builder()
                         .message("메뉴 조회 성공")
                         .data(MenuResponseDto.Data.builder()
@@ -117,6 +118,7 @@ public class ShopService {
 
         // 가게에 등록된 메뉴 조회
         List<MenuResponseDto> menuList = shop.getMenus().stream()
+                .filter(menu -> !"deleted".equals(menu.getStatus()))  // 삭제된 메뉴 필터링
                 .map(menu -> MenuResponseDto.builder()
                         .message("메뉴 조회 성공")
                         .data(MenuResponseDto.Data.builder()
